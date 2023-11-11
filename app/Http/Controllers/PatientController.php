@@ -72,15 +72,16 @@ class PatientController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:patients,email,' . $patient->id,
             'phone' => 'required|string|max:15',
-            // 'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+        $image_path = $this->saveImage($request->document_photo);
         $patient->name = $request->name;
         $patient->email = $request->email;
         $patient->phone = $request->phone;
-        // $patient->document_photo = $request->document_photo;
+        $patient->document_photo = $image_path;
         $patient->save();
-        $message = $this->message(true, 'Patient updated', $patient);
-        return response()->json($message);
+        $mesage = $this->message(true, 'Patient updated', $patient);
+        return response()->json($mesage);
     }
 
     /**
