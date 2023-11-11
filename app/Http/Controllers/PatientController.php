@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 
-use function Laravel\Prompts\error;
-
 class PatientController extends Controller
 {
     /**
@@ -35,13 +33,14 @@ class PatientController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:patients',
             'phone' => 'required|string|max:15',
-            // 'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+        $image_path = $this->saveImage($request->document_photo);
         $patient = new Patient();
         $patient->name = $request->name;
         $patient->email = $request->email;
         $patient->phone = $request->phone;
-        // $patient->document_photo = $request->document_photo;
+        $patient->document_photo = $image_path;
         $patient->save();
         $mesage = $this->message(true, 'Patient created', $patient);
         return response()->json($mesage);
@@ -102,5 +101,12 @@ class PatientController extends Controller
             $response['data'] = $data;
         }
         return $response;
+    }
+    private function saveImage($image)
+    {
+        $imageName = time() . '.' . $image->getClientOriginalExtension();
+        $image->move(public_path('images'), $imageName);
+        $image_path = 'images/' . $imageName;
+        return $image_path;
     }
 }
