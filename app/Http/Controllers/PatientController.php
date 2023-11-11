@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 
+use function Laravel\Prompts\error;
+
 class PatientController extends Controller
 {
     /**
@@ -12,15 +14,22 @@ class PatientController extends Controller
      */
     public function index()
     {
-        return response()->json([
-            'message' => 'hello world',
-        ]);
+        $patients = Patient::all();
+        $mesage = $this->message(true, 'Patients found', $patients);
+        return response()->json($mesage);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Request $request)
+    public function create()
+    {
+        //
+    }
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -28,15 +37,14 @@ class PatientController extends Controller
             'phone' => 'required|string|max:15',
             // 'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
-        return "funciona";
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+        $patient = new Patient();
+        $patient->name = $request->name;
+        $patient->email = $request->email;
+        $patient->phone = $request->phone;
+        // $patient->document_photo = $request->document_photo;
+        $patient->save();
+        $mesage = $this->message(true, 'Patient created', $patient);
+        return response()->json($mesage);
     }
 
     /**
@@ -44,7 +52,8 @@ class PatientController extends Controller
      */
     public function show(Patient $patient)
     {
-        //
+        $message = $this->message(true, 'Patient found', $patient);
+        return response()->json($message);
     }
 
     /**
@@ -60,7 +69,19 @@ class PatientController extends Controller
      */
     public function update(Request $request, Patient $patient)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:patients,email,' . $patient->id,
+            'phone' => 'required|string|max:15',
+            // 'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+        $patient->name = $request->name;
+        $patient->email = $request->email;
+        $patient->phone = $request->phone;
+        // $patient->document_photo = $request->document_photo;
+        $patient->save();
+        $message = $this->message(true, 'Patient updated', $patient);
+        return response()->json($message);
     }
 
     /**
@@ -68,6 +89,18 @@ class PatientController extends Controller
      */
     public function destroy(Patient $patient)
     {
-        //
+        $patient->delete();
+        return response()->json(['message' => 'Paciente deleted', 'patient' => $patient]);
+    }
+    private function message($success, $message, $data = [])
+    {
+        $response = [
+            'success' => $success,
+            'message' => $message,
+        ];
+        if (!empty($data)) {
+            $response['data'] = $data;
+        }
+        return $response;
     }
 }

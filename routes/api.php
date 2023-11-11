@@ -17,5 +17,9 @@ use App\Http\Controllers\PatientController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::get('/register', [PatientController::class, 'index']);
-Route::post('/register', [PatientController::class, 'create']);
+Route::get('/patients/', [PatientController::class, 'index']);
+Route::get('/patient/{patient}', [PatientController::class, 'show']);
+Route::post('/patient/', [PatientController::class, 'store']);
+Route::put('/patient/{patient}', [PatientController::class, 'update']);
+Route::delete('/patient/{patient}', [PatientController::class, 'destroy']);
+
