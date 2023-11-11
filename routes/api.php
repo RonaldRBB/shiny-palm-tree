@@ -20,6 +20,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('/patients/', [PatientController::class, 'index']);
 Route::get('/patient/{patient}', [PatientController::class, 'show']);
 Route::post('/patient/', [PatientController::class, 'store']);
-Route::put('/patient/{patient}', [PatientController::class, 'update']);
+Route::post('/patient/{patient}', [PatientController::class, 'update']);
 Route::delete('/patient/{patient}', [PatientController::class, 'destroy']);
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Patient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class PatientController extends Controller
 {
@@ -29,18 +30,12 @@ class PatientController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:patients',
-            'phone' => 'required|string|max:15',
-            'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
+        $validated = $this->validateRequest($request);
+        if ($validated !== true) {
+            return $validated;
+        }
         $image_path = $this->saveImage($request->document_photo);
-        $patient = new Patient();
-        $patient->name = $request->name;
-        $patient->email = $request->email;
-        $patient->phone = $request->phone;
-        $patient->document_photo = $image_path;
+        $patient = $this->fillModel($request, $image_path);
         $patient->save();
         $mesage = $this->message(true, 'Patient created', $patient);
         return response()->json($mesage);
@@ -68,22 +63,16 @@ class PatientController extends Controller
      */
     public function update(Request $request, Patient $patient)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:patients,email,' . $patient->id,
-            'phone' => 'required|string|max:15',
-            'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
+        $validated = $this->validateRequest($request);
+        if ($validated !== true) {
+            return $validated;
+        }
         $image_path = $this->saveImage($request->document_photo);
-        $patient->name = $request->name;
-        $patient->email = $request->email;
-        $patient->phone = $request->phone;
-        $patient->document_photo = $image_path;
+        $patient = $this->fillModel($request, $image_path, $patient);
         $patient->save();
         $mesage = $this->message(true, 'Patient updated', $patient);
         return response()->json($mesage);
     }
-
     /**
      * Remove the specified resource from storage.
      */
@@ -91,6 +80,31 @@ class PatientController extends Controller
     {
         $patient->delete();
         return response()->json(['message' => 'Paciente deleted', 'patient' => $patient]);
+    }
+    private function validateRequest($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:patients',
+            'phone' => 'required|string|max:15',
+            'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+        if ($validator->fails()) {
+            $message = $this->message(false, 'Validation failed', $validator->errors());
+            return response()->json($message, 422);
+        }
+        return true;
+    }
+    private function fillModel(Request $request, $image_path, Patient $patient = null)
+    {
+        if (is_null($patient)) {
+            $patient = new Patient();
+        }
+        $patient->name = $request->name;
+        $patient->email = $request->email;
+        $patient->phone = $request->phone;
+        $patient->document_photo = $image_path;
+        return $patient;
     }
     private function message($success, $message, $data = [])
     {
