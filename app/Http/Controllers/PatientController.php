@@ -7,6 +7,7 @@ use App\Notifications\ConfirmationMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PatientController extends Controller
 {
@@ -23,7 +24,6 @@ class PatientController extends Controller
             return $this->errorMessage($e, 500);
         }
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -45,24 +45,24 @@ class PatientController extends Controller
             $patient = $this->fillModel($request, $image_path);
             $patient->save();
             $patient->notify(new ConfirmationMessage(false));
+            $patient->document_photo = url('images/' . basename(Storage::url($patient->document_photo)));
             return $this->message(true, 'Patient created', 201, $patient);
         } catch (\Exception $e) {
             return $this->errorMessage($e, 500);
         }
     }
-
     /**
      * Display the specified resource.
      */
     public function show(Patient $patient)
     {
         try {
+            $patient->document_photo = url('images/' . basename(Storage::url($patient->document_photo)));
             return $this->message(true, 'Patient found', 200, $patient);
         } catch (\Exception $e) {
             return $this->errorMessage($e, 500);
         }
     }
-
     /**
      * Show the form for editing the specified resource.
      */
@@ -70,7 +70,6 @@ class PatientController extends Controller
     {
         //
     }
-
     /**
      * Update the specified resource in storage.
      */
@@ -84,6 +83,7 @@ class PatientController extends Controller
             $image_path = $this->saveImage($request->document_photo);
             $patient = $this->fillModel($request, $image_path, $patient);
             $patient->save();
+            $patient->document_photo = url('images/' . basename(Storage::url($patient->document_photo)));
             return $this->message(true, 'Patient updated', 200, $patient);
         } catch (\Exception $e) {
             return $this->errorMessage($e, 500);
