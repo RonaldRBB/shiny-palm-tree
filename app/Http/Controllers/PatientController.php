@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Patient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class PatientController extends Controller
@@ -38,6 +39,7 @@ class PatientController extends Controller
         $patient = $this->fillModel($request, $image_path);
         $patient->save();
         $mesage = $this->message(true, 'Patient created', $patient);
+        Mail::to($patient->email)->queue(new \App\Mail\ConfirmationMail());
         return response()->json($mesage);
     }
 
