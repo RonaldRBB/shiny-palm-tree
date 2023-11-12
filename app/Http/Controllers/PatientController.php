@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Patient;
+use App\Notifications\ConfirmationMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 
 class PatientController extends Controller
@@ -38,8 +40,8 @@ class PatientController extends Controller
         $image_path = $this->saveImage($request->document_photo);
         $patient = $this->fillModel($request, $image_path);
         $patient->save();
+        $patient->notify(new ConfirmationMessage(false));
         $mesage = $this->message(true, 'Patient created', $patient);
-        Mail::to($patient->email)->queue(new \App\Mail\ConfirmationMail($patient->name));
         return response()->json($mesage);
     }
 
