@@ -5,20 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Patient;
 use App\Notifications\ConfirmationMessage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class PatientController extends Controller
 {
+    private const ERROR_MESSAGE = 'There was an error, please try again later';
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $patients = Patient::all();
-        $mesage = $this->message(true, 'Patients found', $patients);
-        return response()->json($mesage);
+        try {
+            $patients = Patient::all();
+            return $this->message(true, 'Patients found', 200, $patients);
+        } catch (\Exception $e) {
+            return $this->errorMessage($e, 500);
+        }
     }
 
     /**
@@ -33,16 +36,19 @@ class PatientController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $this->validateRequest($request);
-        if ($validated !== true) {
-            return $validated;
+        try {
+            $validated = $this->validateRequest($request);
+            if ($validated !== true) {
+                return $validated;
+            }
+            $image_path = $this->saveImage($request->document_photo);
+            $patient = $this->fillModel($request, $image_path);
+            $patient->save();
+            $patient->notify(new ConfirmationMessage(false));
+            return $this->message(true, 'Patient created', 201, $patient);
+        } catch (\Exception $e) {
+            return $this->errorMessage($e, 500);
         }
-        $image_path = $this->saveImage($request->document_photo);
-        $patient = $this->fillModel($request, $image_path);
-        $patient->save();
-        $patient->notify(new ConfirmationMessage(false));
-        $mesage = $this->message(true, 'Patient created', $patient);
-        return response()->json($mesage);
     }
 
     /**
@@ -50,8 +56,11 @@ class PatientController extends Controller
      */
     public function show(Patient $patient)
     {
-        $message = $this->message(true, 'Patient found', $patient);
-        return response()->json($message);
+        try {
+            return $this->message(true, 'Patient found', 200, $patient);
+        } catch (\Exception $e) {
+            return $this->errorMessage($e, 500);
+        }
     }
 
     /**
@@ -67,23 +76,30 @@ class PatientController extends Controller
      */
     public function update(Request $request, Patient $patient)
     {
-        $validated = $this->validateRequest($request);
-        if ($validated !== true) {
-            return $validated;
+        try {
+            $validated = $this->validateRequest($request);
+            if ($validated !== true) {
+                return $validated;
+            }
+            $image_path = $this->saveImage($request->document_photo);
+            $patient = $this->fillModel($request, $image_path, $patient);
+            $patient->save();
+            return $this->message(true, 'Patient updated', 200, $patient);
+        } catch (\Exception $e) {
+            return $this->errorMessage($e, 500);
         }
-        $image_path = $this->saveImage($request->document_photo);
-        $patient = $this->fillModel($request, $image_path, $patient);
-        $patient->save();
-        $mesage = $this->message(true, 'Patient updated', $patient);
-        return response()->json($mesage);
     }
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(Patient $patient)
     {
-        $patient->delete();
-        return response()->json(['message' => 'Paciente deleted', 'patient' => $patient]);
+        try {
+            $patient->delete();
+            return $this->message(true, 'Patient deleted', 200);
+        } catch (\Exception $e) {
+            return $this->errorMessage($e, 500);
+        }
     }
     private function validateRequest($request)
     {
@@ -94,8 +110,7 @@ class PatientController extends Controller
             'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
         if ($validator->fails()) {
-            $message = $this->message(false, 'Validation failed', $validator->errors());
-            return response()->json($message, 422);
+            return $this->message(false, $validator->errors(), 400);
         }
         return true;
     }
@@ -110,7 +125,7 @@ class PatientController extends Controller
         $patient->document_photo = $image_path;
         return $patient;
     }
-    private function message($success, $message, $data = [])
+    private function message($success, $message, $code, $data = [])
     {
         $response = [
             'success' => $success,
@@ -119,7 +134,12 @@ class PatientController extends Controller
         if (!empty($data)) {
             $response['data'] = $data;
         }
-        return $response;
+        return response()->json($response, $code);
+    }
+    private function errorMessage($message, $code)
+    {
+        Log::error($message, ['exception' => $message]);
+        return $this->message(false, self::ERROR_MESSAGE, $code);
     }
     private function saveImage($image)
     {

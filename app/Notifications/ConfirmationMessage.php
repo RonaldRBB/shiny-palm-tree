@@ -44,9 +44,10 @@ class ConfirmationMessage extends Notification
     /**
      * Get the sms representation of the notification.
      */
-    public function toSms(object $notifiable): string
+    public function toSms(object $notifiable): void
     {
-        return 'Welcome to our application!';
+        //future implementation
+        // return 'Welcome to our application!';
     }
     /**
      * Get the array representation of the notification.
