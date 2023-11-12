@@ -16,9 +16,9 @@ class ConfirmationMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct()
+    public function __construct(public string $name)
     {
-        //
+        $this->name = $name;
     }
 
     /**
@@ -38,7 +38,10 @@ class ConfirmationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'welcome'
+            view: 'ConfirmationMail',
+            with: [
+                'name' => $this->name
+            ]
         );
     }
 

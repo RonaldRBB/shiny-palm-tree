@@ -39,7 +39,7 @@ class PatientController extends Controller
         $patient = $this->fillModel($request, $image_path);
         $patient->save();
         $mesage = $this->message(true, 'Patient created', $patient);
-        Mail::to($patient->email)->queue(new \App\Mail\ConfirmationMail());
+        Mail::to($patient->email)->queue(new \App\Mail\ConfirmationMail($patient->name));
         return response()->json($mesage);
     }
 
