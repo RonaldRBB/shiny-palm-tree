@@ -110,7 +110,7 @@ class PatientController extends Controller
             'document_photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
         if ($validator->fails()) {
-            return $this->message(false, $validator->errors(), 400);
+            return $this->message(false, $validator->errors()->first(), 400);
         }
         return true;
     }
@@ -145,7 +145,6 @@ class PatientController extends Controller
     {
         $imageName = time() . '.' . $image->getClientOriginalExtension();
         $image->move(public_path('images'), $imageName);
-        $image_path = 'images/' . $imageName;
-        return $image_path;
+        return $imageName;
     }
 }

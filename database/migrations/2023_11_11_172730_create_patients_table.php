@@ -16,7 +16,7 @@ return new class extends Migration
             $table->timestamps();
             $table->string('name');
             $table->string('email');
-            $table->string('phone', 15);
+            $table->string('phone', 20);
             $table->string('document_photo', 15)->nullable();
         });
     }
